@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""덱에서 화면으로 고친 글을 본문_AX60.md 에 되박는다.
+"""덱에서 화면으로 고친 글을 본문_소개.md 에 되박는다.
 
 덱의 편집은 브라우저 저장소에만 남는다. 그대로 두면 다음 빌드가 만든 글 위에 옛 저장본이
 덮여, 어떤 문장은 남고 어떤 문장은 사라진 것처럼 보인다. 고친 글을 본문 파일로 옮겨야
 빌드가 그 글로 덱을 만든다.
 
-    1. 덱에서 편집 바를 열고 내보내기를 누른다. 편집본_AX60.json 이 내려받아진다
+    1. 덱에서 편집 바를 열고 내보내기를 누른다. 편집본_소개.json 이 내려받아진다
     2. 그 파일을 이 폴더에 두고 python3 apply_edits.py 를 돌린다
-    3. python3 build_ax.py --approve 로 문장을 검수하고 승인한다
+    3. python3 build_deck.py --approve 로 문장을 검수하고 승인한다
     4. 덱에서 편집 바의 되돌리기를 눌러 브라우저 저장본을 새 빌드로 맞춘다
 
 내보내기 파일은 [{slide, i, from, to}] 목록이고, from 은 빌드가 만든 원본, to 는 고친 글이다.
@@ -19,8 +19,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-TEXT = ROOT / "본문_AX60.md"
-DEFAULT = ROOT / "편집본_AX60.json"
+TEXT = ROOT / "본문_소개.md"
+DEFAULT = ROOT / "편집본_소개.json"
 DOWNLOADS = Path.home() / "Downloads"
 
 
@@ -31,7 +31,7 @@ def find_export(argv):
         return p if p.exists() else None
     if DEFAULT.exists():
         return DEFAULT
-    got = sorted(DOWNLOADS.glob("편집본_AX60*.json"), key=lambda p: p.stat().st_mtime)
+    got = sorted(DOWNLOADS.glob("편집본_소개*.json"), key=lambda p: p.stat().st_mtime)
     return got[-1] if got else None
 
 
@@ -67,7 +67,7 @@ def apply(rows):
 def main():
     src = find_export(sys.argv)
     if not src:
-        print("✗ 편집본_AX60.json 을 찾지 못했습니다. 덱의 편집 바에서 내보내기를 먼저 누릅니다.")
+        print("✗ 편집본_소개.json 을 찾지 못했습니다. 덱의 편집 바에서 내보내기를 먼저 누릅니다.")
         raise SystemExit(1)
     rows = json.loads(src.read_text(encoding="utf-8"))
     done, miss = apply(rows)
@@ -78,7 +78,7 @@ def main():
         print(f"\n본문에서 같은 줄을 찾지 못한 {len(miss)}곳은 건너뛰었습니다. 직접 고칩니다.")
         for slide, a in miss:
             print(f"  {slide}  {a[:60]}")
-    print("\n다음: python3 build_ax.py --approve 로 문장을 검수하고 승인합니다")
+    print("\n다음: python3 build_deck.py --approve 로 문장을 검수하고 승인합니다")
 
 
 if __name__ == "__main__":

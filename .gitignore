@@ -4,9 +4,6 @@ __pycache__/
 시연물/shots/
 교정대기_*.txt
 .serena/
-본문_AX60.새로추출.md
-_shot.html
-_s53.html
-# 힉스필드 원본은 42MB라 저장소에 두지 않는다. prep_illus.py를 다시 돌리려면 다시 뽑아야 한다.
-assets/illus/src/
+본문_소개.새로추출.md
+_shot_tmp.html
 .playwright-mcp/

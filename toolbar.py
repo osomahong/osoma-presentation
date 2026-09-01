@@ -67,7 +67,7 @@ TOOLBAR_HTML = r'''<!-- ========================================================
 (function(){
   // 저장 키에 장 수를 넣어, 장 수가 다른 빌드의 저장본이 엉뚱한 자리에 들어가지 않게 한다.
   // 구성과 본문이 크게 바뀐 빌드는 이전 장의 저장본을 복원하지 않는다.
-  var STORE='ax-slide-edits:v2:'+document.querySelectorAll('section.slide').length;
+  var STORE='osoma-slide-edits:v1:'+document.querySelectorAll('section.slide').length;
   var SEL='.kicker,h1,h2.head,h2.big,.lead,.sub,.mchips span'
     +',.pt h4,.pt p,.axstep b,.axstep h4,.axstep p'
     +',.paper .ptag,.paper li,.paper .prole,.axband,.rcap'
@@ -351,7 +351,7 @@ TOOLBAR_HTML = r'''<!-- ========================================================
     if(!rows.length){toast('고친 곳이 없습니다');return;}
     var blob=new Blob([JSON.stringify(rows,null,1)],{type:'application/json'});
     var a=document.createElement('a');
-    a.href=URL.createObjectURL(blob); a.download='편집본_AX60.json';
+    a.href=URL.createObjectURL(blob); a.download='편집본_소개.json';
     document.body.appendChild(a); a.click(); a.remove();
     toast(rows.length+'곳 내보냈습니다');
   };

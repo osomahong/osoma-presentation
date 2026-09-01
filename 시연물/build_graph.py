@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""재단 웹 전체를 세 겹의 온톨로지 그래프로 배치한다.
+"""고객사 웹 전체를 세 겹의 온톨로지 그래프로 배치한다.
 
-바깥 고리는 유입원, 가운데 성운은 merryyear.org 콘텐츠, 안쪽 핵은 결제 층이다.
+바깥 고리는 유입원, 가운데 성운은 콘텐츠 층(SITE_HOST), 안쪽 핵은 결제 층(PAY_HOST)이다.
 두 도메인은 링크로 이어지지 않으므로 donation_name을 열쇠로 다리를 놓는다.
 배치 좌표는 여기서 계산해 박아 넣는다. 브라우저에서 1,300개를 실시간으로
 밀고 당기면 느려진다.
@@ -14,6 +14,10 @@ import math
 import re
 from pathlib import Path
 
+# 고객사 도메인. 프로젝트마다 바꾼다
+SITE_HOST = "example.com"       # 콘텐츠가 있는 도메인
+PAY_HOST = "pay.example.com"    # 결제가 일어나는 도메인
+
 import numpy as np
 
 import campaigns as C
@@ -24,15 +28,15 @@ DATA = HERE / "data"
 # 카테고리. 색은 밤하늘 위에서 서로 구분되도록 골랐다.
 CATS = [
     {"key": "home", "label": "홈", "color": "#FFFFFF",
-     "desc": "재단 첫 화면입니다. 여기서 길이 갈라져 나갑니다"},
+     "desc": "고객사 첫 화면입니다. 여기서 길이 갈라져 나갑니다"},
     {"key": "camp", "label": "캠페인", "color": "#FFB454",
      "desc": "후원을 받는 사연 페이지입니다"},
     {"key": "news", "label": "소식", "color": "#5AA9FF",
-     "desc": "재단이 올린 공지와 이야기입니다"},
+     "desc": "고객사가 올린 공지와 이야기입니다"},
     {"key": "biz", "label": "사업 소개", "color": "#34D3B4",
-     "desc": "재단이 하는 일을 설명합니다"},
-    {"key": "about", "label": "재단 소개", "color": "#C77DFF",
-     "desc": "재단이 어떤 곳인지 알립니다"},
+     "desc": "고객사가 하는 일을 설명합니다"},
+    {"key": "about", "label": "회사 소개", "color": "#C77DFF",
+     "desc": "어떤 곳인지 알립니다"},
     {"key": "supp", "label": "후원 안내", "color": "#FF6B8A",
      "desc": "후원하는 방법을 안내합니다"},
     {"key": "etc", "label": "그 밖의 페이지", "color": "#7E8CB0",
@@ -98,7 +102,7 @@ def load_pages():
     agg = {}
     titles = collections.defaultdict(collections.Counter)
     for r in rows:
-        if r["hostName"] != "merryyear.org":
+        if r["hostName"] != SITE_HOST:
             continue
         p = norm_path(r["pagePath"])
         pv = int(r["screenPageViews"])
@@ -136,7 +140,7 @@ def load_edges(pages):
         if not m:
             continue
         host, path = m.group(1), norm_path(m.group(2) or "/")
-        if host in ("merryyear.org", "www.merryyear.org"):
+        if host in (SITE_HOST, "www." + SITE_HOST):
             if path in pages and path != dst:
                 e[(path, dst)] += pv
         else:
@@ -675,7 +679,7 @@ def main():
             "edges": len(elist),
             "pages_kept": len(keep),
             "edges_kept": len(kept_edges),
-            "note": "결제 층은 online.mrm.or.kr, 콘텐츠 층은 merryyear.org",
+            "note": f"결제 층은 {PAY_HOST}, 콘텐츠 층은 {SITE_HOST}",
         },
         "cats": [
             dict(c, n=cat_n.get(c["key"], 0), top=cat_top.get(c["key"], ""))

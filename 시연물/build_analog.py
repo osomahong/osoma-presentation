@@ -11,6 +11,9 @@
 import json
 from pathlib import Path
 
+# 고객사 도메인. 프로젝트마다 바꾼다
+HOSTS = ("example.com", "pay.example.com")
+
 HERE = Path(__file__).parent
 DATA = HERE / "data"
 
@@ -25,7 +28,7 @@ def load(name):
 def table_view():
     """GA4 페이지 보고서를 엑셀로 내려받은 모습. 열 이름도 내보내기 그대로 둔다."""
     rows = load("nodes")
-    keep = [r for r in rows if r["hostName"] in ("merryyear.org", "online.mrm.or.kr")]
+    keep = [r for r in rows if r["hostName"] in HOSTS]
     keep.sort(key=lambda r: -int(r["screenPageViews"]))
     out = [[r["hostName"], r["pagePath"], r["pageTitle"],
             int(r["screenPageViews"]), int(r["sessions"]), int(r["userEngagementDuration"])]
