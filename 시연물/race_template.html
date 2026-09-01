@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>열매나눔재단 캠페인 모금 레이스</title>
+<!--
+  붙여 넣는 방법
+  이 파일 하나로 동작합니다. 외부 스크립트와 폰트를 부르지 않습니다.
+  다른 HTML 보고서에 넣을 때는 iframe 한 줄이면 됩니다.
+
+    <iframe src="캠페인레이스.html" style="width:100%;aspect-ratio:16/9;border:0" loading="lazy"></iframe>
+
+  주소 뒤에 붙이는 설정
+    ?ratio=9:16   세로 화면 (기본값 16:9)
+    ?autoplay=0   자동 재생 끄기
+    ?loop=0       끝나면 처음으로 돌아가지 않기
+    ?at=0.674     0에서 1 사이 위치로 건너뛰어 멈추기
+
+  볼 만한 지점
+    at=0.070  2025.09.10 여름 캠페인이 올라오는 구간
+    at=0.366  2025.12.30 연말 집중 구간
+    at=0.674  2026.04.24 인스타그램 캠페인, 1년 최다
+    at=0.963  2026.08.10 고액 후원으로 막대가 뛰는 구간
+    at=1      1년 합계 화면
+-->
+<style>
+  :root {
+    --ink: #eaf0ff;
+    --dim: #8b97b8;
+    --line: rgba(150,170,220,.16);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #04060d;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                 "Noto Sans KR", "Malgun Gothic", "맑은 고딕", sans-serif;
+    overflow: hidden;
+  }
+  #wrap {
+    position: relative; width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: #04060d;
+  }
+  #stage { position: relative; }
+  canvas { display: block; width: 100%; height: 100%; border-radius: 2px; }
+
+  /* 조작 막대. 재생 중에는 흐려지고 마우스를 올리면 살아난다. */
+  #bar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: linear-gradient(to top, rgba(4,6,13,.94), rgba(4,6,13,0));
+    opacity: 0; pointer-events: none;
+    transition: opacity .22s ease;
+    font-size: 12px;
+  }
+  #stage:hover #bar, #bar:focus-within, #bar.show {
+    opacity: 1; pointer-events: auto;
+  }
+  button, select {
+    background: rgba(255,255,255,.07);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font: inherit; font-size: 12px;
+    cursor: pointer;
+    line-height: 1.4;
+  }
+  button:hover, select:hover { background: rgba(255,255,255,.14); }
+  button:active { transform: translateY(1px); }
+  #scrub {
+    flex: 1; min-width: 60px; height: 4px; -webkit-appearance: none; appearance: none;
+    background: rgba(255,255,255,.16); border-radius: 3px; outline: none; cursor: pointer;
+  }
+  #scrub::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+    background: #eaf0ff; cursor: pointer; border: 0;
+  }
+  #scrub::-moz-range-thumb {
+    width: 12px; height: 12px; border-radius: 50%; background: #eaf0ff; border: 0; cursor: pointer;
+  }
+  #clock { color: var(--dim); min-width: 82px; font-variant-numeric: tabular-nums; }
+  .sep { width: 1px; height: 18px; background: var(--line); }
+  @media (max-width: 620px) {
+    #bar { font-size: 11px; padding: 8px 10px; gap: 7px; }
+    button, select { padding: 4px 7px; font-size: 11px; }
+    #clock { min-width: 72px; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="bar">
+    <button id="play" title="재생과 멈춤">일시정지</button>
+    <button id="again" title="처음부터">처음부터</button>
+    <input id="scrub" type="range" min="0" max="1000" value="0" step="1" aria-label="재생 위치">
+    <span id="clock">2025.08.15</span>
+    <span class="sep"></span>
+    <select id="speed" title="재생 속도">
+      <option value="5.3">0.5배속</option>
+      <option value="10.7" selected>1배속</option>
+      <option value="17">1.6배속</option>
+      <option value="27">2.5배속</option>
+    </select>
+    <select id="mode" title="막대를 재는 기준">
+      <option value="cum" selected>전체 누적</option>
+      <option value="roll">최근 30일</option>
+    </select>
+    <select id="ratio" title="화면비">
+      <option value="16:9" selected>16:9</option>
+      <option value="9:16">9:16</option>
+    </select>
+    <button id="full" title="전체 화면">전체 화면</button>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+const RACE = /*__RACE_DATA__*/null;
+
+/* 막대를 무엇으로 재는지 고른다.
+   cum  첫날부터 그날까지 누적. 한 해의 총량이 그대로 쌓여 규모가 남는다
+   roll 최근 30일 누적. 그때그때 어느 캠페인이 활발했는지 순위가 자주 바뀐다 */
+const MODE = new URLSearchParams(location.search).get("mode") === "roll" ? "roll" : "cum";
+if (MODE === "roll" && RACE.frames_roll) RACE.frames = RACE.frames_roll;
+RACE.meta.headLabel = MODE === "roll" ? RACE.meta.label_roll : RACE.meta.label_cum;
+RACE.meta.footLabel = MODE === "roll" ? RACE.meta.foot_roll : RACE.meta.foot_cum;
+
+/* ------------------------------------------------------------------ *
+ * 설정
+ * ------------------------------------------------------------------ */
+const P = new URLSearchParams(location.search);
+const CFG = {
+  ratio: P.get("ratio") === "9:16" ? "9:16" : "16:9",
+  autoplay: P.get("autoplay") !== "0",
+  loop: P.get("loop") !== "0",
+  speed: 10.7,        // 초당 며칠을 지나갈지. 눈으로 순위를 따라갈 수 있는 속도로 잡았다
+  topN: RACE.meta.top_n || 8,
+  holdStart: 0.9,     // 첫 화면에서 머무는 시간(초)
+  holdEnd: 3.2,       // 마지막 화면에서 머무는 시간(초)
+};
+
+/* 밤하늘 위에서 서로 구분되는 색. 연 모금액이 큰 캠페인부터 앞자리를 준다. */
+const PALETTE = [
+  "#FFB454", "#FF7A5A", "#FF5E8A", "#C77DFF", "#7B9DFF", "#4FC3F7",
+  "#34D3B4", "#7CD97A", "#E5D45C", "#FF9CC2", "#9AA7FF", "#5FE0C8",
+  "#F2A65A", "#E86F92", "#A98BFF", "#6FB7FF", "#63D6A8", "#B9CE5E",
+  "#FFC98B", "#FF97A8", "#8FD3FF", "#8CE0C0", "#D4C86F", "#C3A0FF", "#68C9E8",
+];
+const COLOR = (() => {
+  const order = RACE.totals.slice().sort((a, b) => b.amount - a.amount).map(t => t.name);
+  const map = new Map();
+  order.forEach((n, i) => map.set(n, PALETTE[i % PALETTE.length]));
+  return id => map.get(RACE.names[id]) || "#8fa3d8";
+})();
+
+const NOTE_AT = new Map(RACE.notes.map(n => [n.d, n.t]));
+const FRAMES = RACE.frames;
+const LAST = FRAMES.length - 1;
+
+/* ------------------------------------------------------------------ *
+ * 화면 크기
+ * ------------------------------------------------------------------ */
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d", { alpha: false });
+const stage = document.getElementById("stage");
+let W = 1920, H = 1080, S = 1;   // 논리 해상도와 배율
+
+function layoutSize() {
+  const vertical = CFG.ratio === "9:16";
+  W = vertical ? 1080 : 1920;
+  H = vertical ? 1920 : 1080;
+  const box = document.getElementById("wrap").getBoundingClientRect();
+  const k = Math.min(box.width / W, box.height / H);
+  stage.style.width = Math.floor(W * k) + "px";
+  stage.style.height = Math.floor(H * k) + "px";
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * dpr);
+  cv.height = Math.round(H * dpr);
+  S = dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  makeStars();
+}
+window.addEventListener("resize", layoutSize);
+
+/* ------------------------------------------------------------------ *
+ * 밤하늘 배경
+ * ------------------------------------------------------------------ */
+let stars = [];
+function makeStars() {
+  const n = Math.round(W * H / 5200);
+  let seed = 20260826;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+  stars = [];
+  for (let i = 0; i < n; i++) {
+    stars.push({
+      x: rnd() * W, y: rnd() * H,
+      r: 0.4 + rnd() * rnd() * 1.9,
+      a: 0.18 + rnd() * 0.62,
+      tw: rnd() * Math.PI * 2,
+      sp: 0.35 + rnd() * 1.1,
+    });
+  }
+}
+
+function drawSky(t) {
+  const g = ctx.createLinearGradient(0, 0, W * 0.45, H);
+  g.addColorStop(0, "#0d1533");
+  g.addColorStop(0.45, "#080d1f");
+  g.addColorStop(1, "#04060d");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 위쪽에 옅은 성운 한 겹
+  const neb = ctx.createRadialGradient(W * 0.74, -H * 0.16, 0, W * 0.74, -H * 0.16, H * 0.95);
+  neb.addColorStop(0, "rgba(86,120,255,.20)");
+  neb.addColorStop(0.5, "rgba(70,90,200,.06)");
+  neb.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = neb;
+  ctx.fillRect(0, 0, W, H);
+
+  for (const s of stars) {
+    const a = s.a * (0.62 + 0.38 * Math.sin(t * s.sp + s.tw));
+    ctx.globalAlpha = a;
+    ctx.fillStyle = "#dce6ff";
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, 6.2832);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ------------------------------------------------------------------ *
+ * 글자 도구
+ * ------------------------------------------------------------------ */
+function font(px, weight) {
+  ctx.font = `${weight || 600} ${px}px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif`;
+}
+
+/** 폭에 맞춰 글자 크기를 줄이고, 그래도 넘치면 끝을 자른다. */
+function fitText(text, maxW, px, minPx, weight) {
+  let size = px;
+  font(size, weight);
+  while (ctx.measureText(text).width > maxW && size > minPx) {
+    size -= 1;
+    font(size, weight);
+  }
+  if (ctx.measureText(text).width <= maxW) return { text, size };
+  let s = text;
+  while (s.length > 2 && ctx.measureText(s + "…").width > maxW) s = s.slice(0, -1);
+  return { text: s + "…", size };
+}
+
+function won(v) {
+  if (v >= 100000000) return (v / 100000000).toFixed(v % 100000000 === 0 ? 0 : 1) + "억";
+  if (v >= 10000) return Math.round(v / 10000).toLocaleString("ko-KR") + "만";
+  return Math.round(v).toLocaleString("ko-KR");
+}
+function comma(v) { return Math.round(v).toLocaleString("ko-KR"); }
+function ymd(d) { return d.slice(0, 4) + "." + d.slice(4, 6) + "." + d.slice(6, 8); }
+
+function roundRect(x, y, w, h, r) {
+  const rr = Math.min(r, h / 2, Math.max(w, 1) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.arcTo(x + w, y, x + w, y + rr, rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  ctx.lineTo(x + rr, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr, rr);
+  ctx.lineTo(x, y + rr);
+  ctx.arcTo(x, y, x + rr, y, rr);
+  ctx.closePath();
+}
+
+/* ------------------------------------------------------------------ *
+ * 값 보간
+ * ------------------------------------------------------------------ */
+function frameMap(i) {
+  const m = new Map();
+  const f = FRAMES[Math.max(0, Math.min(LAST, i))];
+  for (const [id, amt, cnt] of f.b) m.set(id, [amt, cnt]);
+  return m;
+}
+const MAPS = FRAMES.map((_, i) => frameMap(i));
+
+/** 소수 위치 pos에서 각 캠페인의 값을 선형 보간해 돌려준다. */
+function valuesAt(pos) {
+  const i0 = Math.floor(pos), i1 = Math.min(LAST, i0 + 1), k = pos - i0;
+  const a = MAPS[Math.max(0, Math.min(LAST, i0))], b = MAPS[i1];
+  const ids = new Set([...a.keys(), ...b.keys()]);
+  const out = [];
+  for (const id of ids) {
+    const va = a.get(id) || [0, 0], vb = b.get(id) || [0, 0];
+    out.push({
+      id,
+      v: va[0] + (vb[0] - va[0]) * k,
+      c: Math.round(va[1] + (vb[1] - va[1]) * k),
+    });
+  }
+  out.sort((x, y) => y.v - x.v || x.id - y.id);
+  return out;
+}
+
+/* ------------------------------------------------------------------ *
+ * 상태
+ * ------------------------------------------------------------------ */
+const st = {
+  pos: 0,             // 프레임 위치(소수)
+  playing: CFG.autoplay,
+  t: 0,               // 흐른 시간(초)
+  phase: "intro",     // intro | run | outro
+  hold: 0,
+  rowY: new Map(),    // 캠페인별 현재 세로 위치(순위 좌표)
+  rowV: new Map(),    // 그 자리의 속도. 용수철 계산에 쓴다
+  alpha: new Map(),   // 캠페인별 표시 투명도
+  axis: 1,            // 가로 축 최댓값(부드럽게 따라감)
+  note: null,         // {text, until}
+  seenNotes: new Set(),
+  outroA: 0,
+};
+
+/* 임계 감쇠 용수철. 목표까지 천천히 붙었다가 천천히 멈춘다. 되튐은 없다. */
+const SPRING_W = 4.6;
+function springStep(cur, velMap, key, target, dt) {
+  let v = velMap.get(key) || 0;
+  // 한 프레임이 길어져도 발산하지 않도록 잘게 나눠 적분한다
+  let left = Math.min(0.05, dt);
+  while (left > 0) {
+    const h = Math.min(1 / 120, left);
+    v += ((target - cur) * SPRING_W * SPRING_W - v * 2 * SPRING_W) * h;
+    cur += v * h;
+    left -= h;
+  }
+  velMap.set(key, v);
+  return cur;
+}
+
+function resetRace() {
+  st.pos = 0; st.t = 0; st.phase = "intro"; st.hold = 0;
+  st.rowY.clear(); st.rowV.clear(); st.alpha.clear();
+  st.axis = 1; st.note = null; st.seenNotes.clear(); st.outroA = 0;
+}
+
+/* ------------------------------------------------------------------ *
+ * 그리기
+ * ------------------------------------------------------------------ */
+function metrics() {
+  const v = CFG.ratio === "9:16";
+  const M = v ? {
+    v: true,
+    padL: 56, padR: 56,
+    headTop: 76, headGap: 306,
+    labelW: 0,              // 세로 화면은 막대 위에 이름을 얹는다
+    barH: 58,
+    titlePx: 40, datePx: 82, monthPx: 186,
+    namePx: 33, valuePx: 38, rankPx: 28,
+    footH: 224,
+  } : {
+    v: false,
+    padL: 64, padR: 96,
+    headTop: 62, headGap: 186,
+    labelW: 470,
+    barH: 52,
+    titlePx: 34, datePx: 66, monthPx: 206,
+    namePx: 27, valuePx: 33, rankPx: 24,
+    footH: 172,
+  };
+  // 여덟 칸이 화면을 가득 채우도록 줄 높이를 화면에서 역산한다.
+  M.top = M.headTop + M.headGap;
+  M.rowH = (H - M.footH - M.top) / CFG.topN;
+  return M;
+}
+
+function draw(dt) {
+  const M = metrics();
+  drawSky(st.t);
+
+  const pos = st.pos;
+  const idx = Math.max(0, Math.min(LAST, Math.round(pos)));
+  const day = FRAMES[idx].d;
+
+  // 배경에 크게 깔리는 연월. 막대와 겹쳐도 방해되지 않을 만큼만 밝힌다.
+  ctx.save();
+  ctx.globalAlpha = 0.045;
+  font(M.monthPx, 800);
+  ctx.textAlign = "right";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "#cfe0ff";
+  ctx.fillText(day.slice(0, 4) + "." + day.slice(4, 6), W - M.padR, H - M.footH - M.monthPx * 0.16);
+  ctx.restore();
+
+  drawHeader(M, day);
+
+  const rows = valuesAt(pos).filter(r => r.v > 0);   // 값이 0인 막대는 띄우지 않는다
+  const shown = rows.slice(0, CFG.topN);
+  const target = new Map(shown.map((r, i) => [r.id, i]));
+
+  // 축 최댓값을 부드럽게 따라가게 한다
+  const want = Math.max(1, shown.length ? shown[0].v : 1) * 1.08;
+  st.axis += (want - st.axis) * Math.min(1, dt * 2.1);
+
+  const top = M.top;
+  const rowY = i => top + i * M.rowH + (M.rowH - M.barH) / 2;
+  const barX = M.padL + M.labelW;
+  const barMaxW = W - barX - M.padR;
+
+  drawGrid(M, barX, barMaxW, top, rowY);
+
+  // 자리 이동은 감쇠 용수철로 옮긴다. 지수 감쇠는 첫 순간에 확 튀어 순위가 바뀔 때 딱딱하게 보인다.
+  const live = new Set(shown.map(r => r.id));
+  for (const r of rows) {
+    const t = target.has(r.id) ? target.get(r.id) : CFG.topN + 0.4;
+    if (!st.rowY.has(r.id)) { st.rowY.set(r.id, t); st.rowV.set(r.id, 0); }
+    st.rowY.set(r.id, springStep(st.rowY.get(r.id), st.rowV, r.id, t, dt));
+    const wantA = live.has(r.id) ? 1 : 0;
+    const curA = st.alpha.get(r.id) || 0;
+    st.alpha.set(r.id, curA + (wantA - curA) * Math.min(1, dt * 3.2));
+  }
+  for (const id of [...st.alpha.keys()]) {
+    if (!rows.some(r => r.id === id)) {
+      const a = st.alpha.get(id) * (1 - Math.min(1, dt * 3.2));
+      if (a < 0.01) { st.alpha.delete(id); st.rowY.delete(id); st.rowV.delete(id); }
+      else st.alpha.set(id, a);
+    }
+  }
+
+  const drawList = rows
+    .filter(r => (st.alpha.get(r.id) || 0) > 0.01)
+    .sort((a, b) => (st.rowY.get(b.id) || 0) - (st.rowY.get(a.id) || 0));
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, top - M.rowH * 0.1, W, CFG.topN * M.rowH + M.rowH * 0.2);
+  ctx.clip();
+  for (const r of drawList) {
+    drawBar(M, r, rowY(st.rowY.get(r.id)), barX, barMaxW, st.alpha.get(r.id));
+  }
+  ctx.restore();
+
+  drawFooter(M, idx);
+  drawNote(M);
+  if (st.phase === "outro") drawOutro(M);
+}
+
+function drawHeader(M, day) {
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
+  font(M.titlePx, 700);
+  ctx.fillStyle = "#e9f0ff";
+  const titleY = M.headTop + M.titlePx * 0.8;
+  ctx.fillText("열매나눔재단 캠페인 모금 레이스", M.padL, titleY);
+
+  font(M.titlePx * 0.58, 500);
+  ctx.fillStyle = "#7f8db3";
+  ctx.fillText(
+    RACE.meta.headLabel,
+    M.padL, titleY + M.titlePx * 1.0
+  );
+
+  font(M.datePx, 800);
+  ctx.fillStyle = "#ffffff";
+  if (M.v) {
+    // 세로 화면은 폭이 좁아 날짜를 아래 줄로 내린다
+    ctx.fillText(ymd(day), M.padL, titleY + M.titlePx * 1.0 + M.datePx * 1.15);
+  } else {
+    ctx.textAlign = "right";
+    ctx.fillText(ymd(day), W - M.padR, M.headTop + M.datePx * 0.78);
+    ctx.textAlign = "left";
+  }
+}
+
+function drawGrid(M, barX, barMaxW, top, rowY) {
+  const step = niceStep(st.axis);
+  ctx.save();
+  ctx.lineWidth = 1;
+  font(M.rankPx * 0.86, 500);
+  ctx.textAlign = "center";
+  const bottom = top + CFG.topN * M.rowH;
+  const labelY = top - 26;
+  for (let v = step; v <= st.axis; v += step) {
+    const x = Math.round(barX + (v / st.axis) * barMaxW) + 0.5;
+    if (x > W - M.padR * 0.5) continue;
+    const g = ctx.createLinearGradient(0, labelY, 0, bottom);
+    g.addColorStop(0, "rgba(150,170,220,.30)");
+    g.addColorStop(1, "rgba(150,170,220,.07)");
+    ctx.strokeStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(x, labelY + 12);
+    ctx.lineTo(x, bottom);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(150,170,220,.5)";
+    ctx.fillText(won(v) + "원", x, labelY);
+  }
+  ctx.restore();
+  ctx.textAlign = "left";
+}
+
+function niceStep(max) {
+  const raw = max / 4;
+  const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1))));
+  for (const m of [1, 2, 2.5, 5, 10]) if (raw <= m * p) return m * p;
+  return 10 * p;
+}
+
+function drawBar(M, r, y, barX, barMaxW, alpha) {
+  const name = RACE.names[r.id];
+  const col = COLOR(r.id);
+  const w = Math.max(4, (r.v / st.axis) * barMaxW);
+  const h = M.barH;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+  // 막대 뒤 빛번짐
+  ctx.shadowColor = col;
+  ctx.shadowBlur = 26;
+  const g = ctx.createLinearGradient(barX, 0, barX + w, 0);
+  g.addColorStop(0, hexA(col, 0.55));
+  g.addColorStop(1, col);
+  ctx.fillStyle = g;
+  roundRect(barX, y, w, h, h / 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // 막대 끝의 밝은 점. 막대가 짧으면 밖으로 삐져나오므로 그리지 않는다
+  if (w > h * 1.6) {
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.beginPath();
+    ctx.arc(barX + w - h * 0.34, y + h / 2, h * 0.11, 0, 6.2832);
+    ctx.fill();
+  }
+
+  if (M.v) {
+    // 세로 화면: 이름을 막대 위에 올린다
+    const fit = fitText(name, W - M.padL - M.padR - 190, M.namePx, 22, 600);
+    font(fit.size, 600);
+    ctx.fillStyle = "#e8eeff";
+    ctx.textAlign = "left";
+    ctx.fillText(fit.text, M.padL, y - 16);
+  } else {
+    // 가로 화면: 왼쪽 이름 칸
+    const fit = fitText(name, M.labelW - 58, M.namePx, 17, 600);
+    font(fit.size, 600);
+    ctx.fillStyle = "#e8eeff";
+    ctx.textAlign = "right";
+    ctx.fillText(fit.text, barX - 26, y + h / 2 + fit.size * 0.35);
+    ctx.textAlign = "left";
+  }
+
+  // 금액과 건수를 한 덩어리로 붙인다. 막대 안에 다 들어가면 안쪽에, 아니면 바깥에 둔다
+  const amt = comma(r.v) + "원";
+  const cnt = r.c > 0 ? r.c + "건" : "";
+  font(M.valuePx, 800);
+  const aw = ctx.measureText(amt).width;
+  font(M.rankPx * 0.92, 500);
+  const cw = cnt ? ctx.measureText(cnt).width + 12 : 0;
+  const inside = w > aw + cw + 52;
+  const baseY = y + h / 2;
+  let x = inside ? barX + w - 22 - cw : barX + w + 18;
+
+  font(M.valuePx, 800);
+  ctx.fillStyle = inside ? "rgba(9,13,26,.92)" : "#e8eeff";
+  ctx.textAlign = inside ? "right" : "left";
+  ctx.fillText(amt, x, baseY + M.valuePx * 0.35);
+
+  if (cnt) {
+    font(M.rankPx * 0.92, 500);
+    ctx.fillStyle = inside ? "rgba(9,13,26,.55)" : "rgba(190,203,235,.6)";
+    ctx.textAlign = "left";
+    ctx.fillText(cnt, inside ? x + 12 : x + aw + 12, baseY + M.rankPx * 0.33);
+  }
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+function drawFooter(M, idx) {
+  const f = FRAMES[idx];
+  // 합계는 한 줄로 눕힌다. 두 줄로 쌓으면 여덟 번째 막대와 붙는다.
+  const y = H - M.footH * 0.52;
+  const sumPx = M.datePx * 0.56;
+  ctx.save();
+  ctx.textAlign = "left";
+  font(sumPx, 800);
+  ctx.fillStyle = "#dfe8ff";
+  ctx.fillText(comma(f.t) + "원", M.padL, y);
+  const aw = ctx.measureText(comma(f.t) + "원").width;
+
+  font(M.namePx * 0.82, 500);
+  ctx.fillStyle = "#7f8db3";
+  ctx.fillText(RACE.meta.footLabel, M.padL + aw + 16, y);
+
+  // 진행 막대와 설명 눈금
+  const bx = M.padL, bw = W - M.padL - M.padR;
+  const by = H - M.footH * 0.24;
+  ctx.fillStyle = "rgba(150,170,220,.16)";
+  roundRect(bx, by, bw, 5, 3); ctx.fill();
+  const p = idx / LAST;
+  const grad = ctx.createLinearGradient(bx, 0, bx + bw, 0);
+  grad.addColorStop(0, "#4a6cff");
+  grad.addColorStop(1, "#8fb4ff");
+  ctx.fillStyle = grad;
+  roundRect(bx, by, Math.max(5, bw * p), 5, 3); ctx.fill();
+  for (const n of RACE.notes) {
+    const i = FRAMES.findIndex(f2 => f2.d === n.d);
+    if (i < 0) continue;
+    ctx.fillStyle = "rgba(255,205,120,.72)";
+    ctx.beginPath();
+    ctx.arc(bx + bw * (i / LAST), by + 2.5, 4.2, 0, 6.2832);
+    ctx.fill();
+  }
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(bx + bw * p, by + 2.5, 7, 0, 6.2832);
+  ctx.fill();
+
+  font(M.rankPx * 0.8, 500);
+  ctx.fillStyle = "rgba(140,155,190,.55)";
+  ctx.textAlign = "right";
+  ctx.fillText("자료 GA4 " + ymd(RACE.meta.start) + " ~ " + ymd(RACE.meta.end), W - M.padR, y);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+function drawNote(M) {
+  if (!st.note) return;
+  const left = st.note.until - st.t;
+  if (left <= 0) { st.note = null; return; }
+  const a = Math.min(1, left / 0.45) * Math.min(1, (2.8 - left) / 0.35);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, a));
+  font(M.namePx * 1.02, 700);
+  const tw = ctx.measureText(st.note.text).width;
+  const padX = 26, hgt = M.namePx * 2.0;
+  const x = W - M.padR - tw - padX * 2;
+  // 날짜 바로 아래. 가로와 세로에서 날짜가 놓이는 자리가 다르다
+  const y = M.v
+    ? M.headTop + M.titlePx * 1.8 + M.datePx * 1.15 + 26
+    : M.headTop + M.datePx * 0.78 + 26;
+  ctx.fillStyle = "rgba(255,196,96,.14)";
+  ctx.strokeStyle = "rgba(255,196,96,.45)";
+  ctx.lineWidth = 1.5;
+  roundRect(x, y, tw + padX * 2, hgt, hgt / 2);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#ffd98f";
+  ctx.textAlign = "left";
+  ctx.fillText(st.note.text, x + padX, y + hgt / 2 + M.namePx * 0.36);
+  ctx.restore();
+}
+
+function drawOutro(M) {
+  const a = Math.min(1, st.outroA);
+  if (a <= 0.005) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+
+  // 밤하늘을 다시 깔아 레이스 화면을 완전히 덮는다
+  const sky = ctx.createLinearGradient(0, 0, W * 0.45, H);
+  sky.addColorStop(0, "#0d1533");
+  sky.addColorStop(0.45, "#080d1f");
+  sky.addColorStop(1, "#04060d");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+  const neb = ctx.createRadialGradient(W * 0.5, H * 0.12, 0, W * 0.5, H * 0.12, H * 0.9);
+  neb.addColorStop(0, "rgba(86,120,255,.16)");
+  neb.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = neb;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#dce6ff";
+  for (const s of stars) {
+    ctx.globalAlpha = a * s.a * 0.8;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, 6.2832);
+    ctx.fill();
+  }
+  ctx.globalAlpha = a;
+
+  const totals = RACE.totals.slice().sort((x, y) => y.amount - x.amount);
+  const sum = totals.reduce((s, t) => s + t.amount, 0);
+  const cnt = totals.reduce((s, t) => s + t.count, 0);
+  // 세로 화면은 높이가 남으니 두 줄 더 보여 준다
+  const N = Math.min(CFG.ratio === "9:16" ? 8 : 6, totals.length);
+
+  // 제목 덩어리와 순위 목록을 합친 높이를 재서 화면 가운데에 놓는다
+  const capPx = M.titlePx * 0.82;
+  const sumPx = M.datePx * (M.v ? 1.05 : 1.3);
+  const subPx = M.titlePx * 0.86;
+  const listPx = M.namePx * (M.v ? 0.98 : 0.92);
+  const listRow = listPx * (M.v ? 3.5 : 3.1);
+  // 위에서부터 차례로 쌓아 놓고, 전체 높이를 재서 화면 가운데에 앉힌다
+  const gapCap = sumPx * 1.15;
+  const gapSum = subPx * 1.5;
+  const gapSub = subPx * 2.4;
+  const blockH = capPx + gapCap + gapSum + gapSub + listRow * N;
+  let y = (H - blockH) / 2 + capPx;
+
+  ctx.textAlign = "center";
+  font(capPx, 500);
+  ctx.fillStyle = "#7f8db3";
+  ctx.fillText(ymd(RACE.meta.start) + " ~ " + ymd(RACE.meta.end) + " 캠페인 모금 합계", W / 2, y);
+  y += gapCap;
+
+  font(sumPx, 800);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillText(comma(sum) + "원", W / 2, y);
+  y += gapSum;
+
+  font(subPx, 600);
+  ctx.fillStyle = "#9fb0d8";
+  ctx.fillText(`캠페인 ${totals.length}개, 후원 ${comma(cnt)}건`, W / 2, y);
+  y += gapSub;
+
+  const bw = M.v ? W - M.padL * 2 : W * 0.56;
+  const bx = (W - bw) / 2;
+  const maxA = totals[0].amount;
+  const valW = M.v ? 240 : 220;
+  for (let i = 0; i < N; i++) {
+    const t = totals[i];
+    const ry = y + i * listRow;
+    const col = COLOR(RACE.names.indexOf(t.name));
+    const fit = fitText(t.name, bw - valW - 24, listPx, 15, 600);
+    font(fit.size, 600);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#dbe4ff";
+    ctx.fillText(fit.text, bx, ry);
+
+    font(listPx * 0.94, 700);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#aebbdd";
+    ctx.fillText(comma(t.amount) + "원", bx + bw, ry);
+
+    const w = Math.max(6, (t.amount / maxA) * bw);
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = hexA(col, 0.92);
+    roundRect(bx, ry + listPx * 0.42, w, listPx * 0.34, listPx * 0.17);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+/* ------------------------------------------------------------------ *
+ * 진행
+ * ------------------------------------------------------------------ */
+let prev = performance.now();
+function tick(now) {
+  const dt = Math.min(0.05, (now - prev) / 1000);
+  prev = now;
+  st.t += dt;
+
+  if (st.playing) {
+    if (st.phase === "intro") {
+      st.hold += dt;
+      if (st.hold >= CFG.holdStart) { st.phase = "run"; st.hold = 0; }
+    } else if (st.phase === "run") {
+      const before = Math.round(st.pos);
+      st.pos = Math.min(LAST, st.pos + CFG.speed * dt);
+      const after = Math.round(st.pos);
+      for (let i = before; i <= after; i++) {
+        const d = FRAMES[Math.max(0, Math.min(LAST, i))].d;
+        if (NOTE_AT.has(d) && !st.seenNotes.has(d)) {
+          st.seenNotes.add(d);
+          st.note = { text: NOTE_AT.get(d), until: st.t + 3.6 };
+        }
+      }
+      if (st.pos >= LAST) { st.phase = "outro"; st.hold = 0; }
+    } else {
+      st.hold += dt;
+      st.outroA = Math.min(1, st.outroA + dt * 1.6);
+      if (st.hold >= CFG.holdEnd) {
+        if (CFG.loop) resetRace();
+        else { st.playing = false; syncPlayBtn(); }
+      }
+    }
+  }
+  if (st.phase !== "outro" && st.outroA > 0) st.outroA = Math.max(0, st.outroA - dt * 3);
+
+  draw(dt);
+  syncScrub();
+  requestAnimationFrame(tick);
+}
+
+/* ------------------------------------------------------------------ *
+ * 조작
+ * ------------------------------------------------------------------ */
+const $play = document.getElementById("play");
+const $scrub = document.getElementById("scrub");
+const $clock = document.getElementById("clock");
+let dragging = false;
+
+function syncPlayBtn() { $play.textContent = st.playing ? "일시정지" : "재생"; }
+function syncScrub() {
+  if (!dragging) $scrub.value = Math.round((st.pos / LAST) * 1000);
+  const d = FRAMES[Math.max(0, Math.min(LAST, Math.round(st.pos)))].d;
+  $clock.textContent = ymd(d);
+}
+
+$play.onclick = () => {
+  if (!st.playing && st.phase === "outro") resetRace();
+  st.playing = !st.playing;
+  syncPlayBtn();
+};
+document.getElementById("again").onclick = () => { resetRace(); st.playing = true; syncPlayBtn(); };
+
+/* 덱에서 보내는 재생과 일시정지. 판 안의 단추를 그대로 눌러 상태를 맞춘다 */
+addEventListener("message", (e) => {
+  const c = e.data && e.data.ax;
+  if (c !== "play" && c !== "pause") return;
+  if ((c === "play") !== st.playing) document.getElementById("play").click();
+});
+
+$scrub.addEventListener("input", () => {
+  dragging = true;
+  st.phase = "run"; st.outroA = 0;
+  st.pos = (Number($scrub.value) / 1000) * LAST;
+  syncScrub();
+});
+$scrub.addEventListener("change", () => { dragging = false; });
+document.getElementById("speed").onchange = e => { CFG.speed = Number(e.target.value); };
+document.getElementById("ratio").onchange = e => { CFG.ratio = e.target.value; layoutSize(); };
+document.getElementById("mode").onchange = e => {
+  const u = new URL(location.href);
+  u.searchParams.set("mode", e.target.value);
+  location.href = u.toString();
+};
+document.getElementById("full").onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else stage.requestFullscreen?.();
+};
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); $play.click(); }
+  if (e.code === "KeyR") document.getElementById("again").click();
+});
+
+// 손가락으로 쓰는 화면에는 마우스 올림이 없다. 화면을 누르면 조작 막대가 나온다.
+const $bar = document.getElementById("bar");
+let hideTimer = null;
+function flashBar(ms) {
+  $bar.classList.add("show");
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => $bar.classList.remove("show"), ms);
+}
+cv.addEventListener("pointerdown", e => {
+  if (e.pointerType !== "mouse") flashBar(3200);
+});
+if (!P.has("at")) flashBar(2600);  // 처음 열었을 때 한 번 보여 준다
+
+/* 시작 */
+document.getElementById("ratio").value = CFG.ratio;
+document.getElementById("mode").value = MODE;
+layoutSize();
+resetRace();
+st.playing = CFG.autoplay;
+// ?at=0.35 처럼 재생 위치를 지정하면 그 지점에서 멈춘 화면을 띄운다. 검수와 갈무리에 쓴다.
+if (P.has("at")) {
+  const f = Math.max(0, Math.min(1, Number(P.get("at")) || 0));
+  st.pos = f * LAST;
+  st.phase = f >= 1 ? "outro" : "run";
+  if (st.phase === "outro") st.outroA = 1;
+  st.playing = false;
+  for (const n of RACE.notes) {
+    const i = FRAMES.findIndex(x => x.d === n.d);
+    if (i >= 0 && i <= st.pos) st.seenNotes.add(n.d);
+  }
+  // 막대 자리와 투명도를 목표값으로 바로 맞춰 둔다
+  const rows = valuesAt(st.pos).slice(0, CFG.topN);
+  rows.forEach((r, i) => { st.rowY.set(r.id, i); st.rowV.set(r.id, 0); st.alpha.set(r.id, 1); });
+  st.axis = Math.max(1, rows.length ? rows[0].v : 1) * 1.08;
+}
+syncPlayBtn();
+requestAnimationFrame(t => { prev = t; tick(t); });
+</script>
+</body>
+</html>

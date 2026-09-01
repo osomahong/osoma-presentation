@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>같은 자료를 보던 세 가지 방식</title>
+<!--
+  같은 GA4 자료를 표, 대시보드, 자연어 질의 세 가지로 보여 준다.
+  덱에서는 슬라이드마다 ?view= 로 필요한 화면 하나만 연다.
+
+    ?view=table   엑셀로 내려받은 원본
+    ?view=dash    대시보드
+    ?view=ai      자연어 질의
+
+  숫자는 시연물/data 의 실제 GA4 내보내기를 그대로 쓴다.
+-->
+<style>
+:root{
+  --xl:#107C41;          /* 엑셀 초록 */
+  --xlline:#D0D7DE;
+  --xlhead:#F2F2F2;
+  --ga:#1A73E8;          /* 구글 파랑 */
+  --gabg:#F8F9FA;
+  --galine:#DADCE0;
+  --gaink:#202124;
+  --gadim:#5F6368;
+  --fs:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --fm:"SF Mono",Menlo,Consolas,"D2Coding",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b0d12;overflow:hidden;font-family:var(--fs)}
+#wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;flex:none;width:1920px;height:1080px;transform-origin:center center;
+       overflow:hidden;background:#fff}
+.view{position:absolute;inset:0;display:none;flex-direction:column}
+.view.on{display:flex}
+
+/* ── 떠 있는 조작 막대. 화면을 가리지 않도록 평소에는 숨는다 ── */
+#bar{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);display:flex;align-items:center;
+     gap:6px;padding:8px 12px;border-radius:999px;background:rgba(18,22,32,.82);backdrop-filter:blur(10px);
+     box-shadow:0 10px 34px rgba(0,0,0,.34);opacity:0;transition:opacity .22s;z-index:50}
+#stage:hover #bar,#bar.show{opacity:1}
+#bar button{font:600 17px/1 var(--fs);color:#C9D2E4;background:none;border:0;padding:10px 18px;
+            border-radius:999px;cursor:pointer}
+#bar button:hover{background:rgba(255,255,255,.10);color:#fff}
+#bar button.on{background:#fff;color:#12161f}
+#bar .sep{width:1px;height:22px;background:rgba(255,255,255,.18);margin:0 6px}
+
+/* ══════════════════════════════════════════════════════════════════
+   1. 엑셀로 내려받은 원본
+   ══════════════════════════════════════════════════════════════════ */
+.xl{background:#fff;font-size:17px;color:#1B1B1B}
+.xl .titlebar{display:flex;align-items:center;gap:14px;height:56px;padding:0 20px;background:var(--xl);color:#fff}
+.xl .titlebar .app{width:30px;height:30px;border-radius:5px;background:#fff;color:var(--xl);
+                   font:800 17px/30px var(--fs);text-align:center}
+.xl .titlebar .fname{font-size:19px;font-weight:600}
+.xl .titlebar .fname em{font-style:normal;opacity:.72;font-weight:400}
+.xl .titlebar .win{margin-left:auto;display:flex;gap:22px;opacity:.9;font-size:17px}
+.xl .ribtabs{display:flex;align-items:flex-end;gap:2px;height:44px;padding:0 16px;background:var(--xl);color:#fff}
+.xl .ribtabs span{padding:10px 18px;font-size:16.5px;border-radius:6px 6px 0 0}
+.xl .ribtabs span.on{background:var(--xlhead);color:#1B1B1B;font-weight:600}
+.xl .ribbon{display:flex;align-items:center;gap:0;height:96px;padding:0 18px;background:var(--xlhead);
+            border-bottom:1px solid var(--xlline)}
+.xl .rgrp{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 20px;height:76px;
+          justify-content:center;border-right:1px solid #E1E1E1}
+.xl .rgrp .ri{display:flex;gap:12px;align-items:center}
+.xl .rgrp b{font-size:13.5px;font-weight:400;color:#616161}
+.xl .btn{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:13px;color:#3C3C3C;min-width:44px}
+.xl .btn i{font-style:normal;font-size:21px;line-height:1}
+.xl .sq{width:26px;height:26px;border:1px solid #BDBDBD;border-radius:3px;background:#fff;
+        font:600 15px/24px var(--fs);text-align:center;color:#3C3C3C}
+.xl .formbar{display:flex;align-items:center;height:44px;border-bottom:1px solid var(--xlline);background:#fff}
+.xl .namebox{width:180px;height:100%;border-right:1px solid var(--xlline);display:flex;align-items:center;
+             padding:0 14px;font-size:16px;color:#3C3C3C}
+.xl .fx{width:56px;text-align:center;color:#616161;font-style:italic;font-size:17px;
+        border-right:1px solid var(--xlline);line-height:44px;height:100%}
+.xl .fval{padding:0 16px;font-size:16.5px;color:#1B1B1B}
+.xl .grid{flex:1;overflow:hidden;position:relative}
+.xl table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:16.5px}
+.xl thead th{position:sticky;top:0;background:var(--xlhead);border:1px solid var(--xlline);
+             font-weight:400;color:#3C3C3C;height:30px;font-size:14.5px;text-align:center}
+.xl tbody td{border:1px solid #E6E9ED;height:35px;padding:0 10px;white-space:nowrap;overflow:hidden;
+             text-overflow:ellipsis}
+.xl tbody tr:hover td{background:#F5FAF7}
+.xl .rn{background:var(--xlhead);border:1px solid var(--xlline);color:#3C3C3C;text-align:center;
+        width:66px;font-size:14.5px}
+.xl .hdr td{background:#E8F2EC;font-weight:700;position:relative}
+.xl .hdr td:not(.rn)::after{content:"";position:absolute;right:8px;top:50%;margin-top:-2px;
+                   border-left:5px solid transparent;border-right:5px solid transparent;
+                   border-top:6px solid #5A6B60}
+.xl .num{text-align:right;font-variant-numeric:tabular-nums}
+.xl .sel{outline:2px solid var(--xl);outline-offset:-2px}
+.xl .sheets{display:flex;align-items:center;gap:2px;height:44px;padding:0 14px;background:#F7F8F9;
+            border-top:1px solid var(--xlline)}
+.xl .sheets .sh{padding:9px 22px;font-size:16px;color:#3C3C3C;border-radius:5px 5px 0 0}
+.xl .sheets .sh.on{background:#fff;font-weight:700;color:var(--xl);
+                   box-shadow:inset 0 3px 0 var(--xl);border:1px solid var(--xlline);border-bottom:none}
+.xl .status{display:flex;align-items:center;height:38px;padding:0 20px;background:var(--xl);color:#fff;
+            font-size:15px;gap:26px}
+.xl .status .right{margin-left:auto;display:flex;gap:30px;font-variant-numeric:tabular-nums}
+
+/* ══════════════════════════════════════════════════════════════════
+   2. 대시보드
+   ══════════════════════════════════════════════════════════════════ */
+.ga{background:var(--gabg);color:var(--gaink);flex-direction:row}
+.ga .rail{width:250px;background:#fff;border-right:1px solid var(--galine);padding:20px 0;flex:none}
+.ga .rail .brand{display:flex;align-items:center;gap:12px;padding:0 22px 22px;font-size:20px;font-weight:500;color:var(--gadim)}
+.ga .rail .brand b{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#F9AB00,#E37400);
+                   display:inline-block}
+.ga .rail .nav{display:flex;align-items:center;gap:16px;padding:13px 22px;font-size:17.5px;color:var(--gadim);
+               border-radius:0 999px 999px 0;margin-right:14px}
+.ga .rail .nav i{font-style:normal;font-size:18px;width:20px;text-align:center;opacity:.75}
+.ga .rail .nav.on{background:#E8F0FE;color:#1967D2;font-weight:600}
+.ga .rail .sub{padding:9px 22px 9px 58px;font-size:16.5px;color:var(--gadim)}
+.ga .rail .sub.on{color:#1967D2;font-weight:600}
+.ga .rail hr{border:0;border-top:1px solid var(--galine);margin:16px 0}
+.ga .main{flex:1;display:flex;flex-direction:column;min-width:0}
+.ga .top{display:flex;align-items:center;gap:16px;height:70px;padding:0 30px;background:#fff;
+         border-bottom:1px solid var(--galine)}
+.ga .prop{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:500}
+.ga .prop span{font-size:15.5px;color:var(--gadim);font-weight:400}
+.ga .chip{margin-left:auto;display:flex;align-items:center;gap:9px;border:1px solid var(--galine);
+          border-radius:999px;padding:9px 18px;font-size:16px;color:var(--gadim);background:#fff}
+.ga .body{flex:1;padding:26px 30px;overflow:hidden}
+.ga h1{font-size:32px;font-weight:400;margin-bottom:6px}
+.ga .crumb{font-size:15.5px;color:var(--gadim);margin-bottom:22px}
+.ga .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:20px}
+.ga .card{background:#fff;border:1px solid var(--galine);border-radius:10px;padding:20px 22px}
+.ga .card .k{font-size:16px;color:var(--gadim);display:flex;align-items:center;gap:7px}
+.ga .card .v{font-size:40px;font-weight:400;margin-top:8px;font-variant-numeric:tabular-nums}
+.ga .card .d{font-size:15px;margin-top:8px;color:#188038;font-variant-numeric:tabular-nums}
+.ga .card .d.dn{color:#D93025}
+.ga .row2{display:grid;grid-template-columns:1.42fr 1fr;gap:18px;height:420px;margin-bottom:18px}
+.ga .row3{height:316px}
+.ga .panel{background:#fff;border:1px solid var(--galine);border-radius:10px;padding:20px 24px;
+           display:flex;flex-direction:column;min-height:0}
+.ga .panel h3{font-size:19px;font-weight:500;margin-bottom:3px}
+.ga .panel .sub{font-size:15px;color:var(--gadim);margin-bottom:14px}
+.ga .panel svg{flex:1;width:100%;min-height:0}
+.ga .bars{display:flex;flex-direction:column;gap:13px;flex:1;justify-content:center}
+.ga .bar{display:grid;grid-template-columns:132px 1fr 96px;align-items:center;gap:14px;font-size:16px}
+.ga .bar .t{color:var(--gadim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ga .bar .g{height:22px;background:#E8F0FE;border-radius:3px;overflow:hidden}
+.ga .bar .g i{display:block;height:100%;background:var(--ga);border-radius:3px}
+.ga .bar .n{text-align:right;font-variant-numeric:tabular-nums}
+.ga .gtab{width:100%;border-collapse:collapse;font-size:16px}
+.ga .gtab th{text-align:right;font-weight:500;color:var(--gadim);font-size:14.5px;padding:0 0 11px;
+             border-bottom:1px solid var(--galine)}
+.ga .gtab th:first-child,.ga .gtab td:first-child{text-align:left}
+.ga .gtab td{text-align:right;padding:11px 0;border-bottom:1px solid #EEF0F2;font-variant-numeric:tabular-nums}
+
+/* ══════════════════════════════════════════════════════════════════
+   3. 자연어 질의
+   ══════════════════════════════════════════════════════════════════ */
+.ai{background:#fff}
+.ai .aitop{display:flex;align-items:center;gap:14px;height:64px;padding:0 34px;border-bottom:1px solid #EAECF0;
+           font-size:18px;color:#475467}
+.ai .aitop b{width:28px;height:28px;border-radius:8px;
+             background:linear-gradient(135deg,#FF7A1A,#FF4D6D 40%,#A855F7 72%,#3B82F6);display:inline-block}
+.ai .aitop .who{color:#101828;font-weight:600;font-size:19px}
+.ai .aitop .src{margin-left:auto;font-size:15.5px;color:#667085;border:1px solid #EAECF0;border-radius:999px;
+                padding:7px 16px}
+.ai .thread{flex:1;padding:34px 120px;display:flex;flex-direction:column;gap:26px;overflow:hidden}
+.ai .me{align-self:flex-end;max-width:70%;background:#F2F4F7;border-radius:20px 20px 6px 20px;
+        padding:19px 26px;font-size:21px;line-height:1.5;color:#101828}
+.ai .bot{display:flex;gap:18px;max-width:92%}
+.ai .bot .av{width:34px;height:34px;border-radius:10px;flex:none;margin-top:3px;
+             background:linear-gradient(135deg,#FF7A1A,#FF4D6D 40%,#A855F7 72%,#3B82F6)}
+.ai .bot .msg{font-size:20px;line-height:1.62;color:#1D2939}
+.ai .bot .msg p+p{margin-top:12px}
+.ai .bot .msg strong{font-weight:700;color:#101828}
+.ai .evi{margin:15px 0;border:1px solid #EAECF0;border-radius:12px;overflow:hidden}
+.ai .evi .eh{background:#F9FAFB;padding:10px 18px;font-size:14.5px;color:#667085;
+             border-bottom:1px solid #EAECF0;display:flex;gap:10px;align-items:center}
+.ai .evi table{width:100%;border-collapse:collapse;font-size:17px}
+.ai .evi th{text-align:right;font-weight:600;color:#667085;font-size:14.5px;padding:10px 18px;background:#fff}
+.ai .evi th:first-child,.ai .evi td:first-child{text-align:left}
+.ai .evi td{text-align:right;padding:10px 18px;border-top:1px solid #F2F4F7;font-variant-numeric:tabular-nums}
+.ai .evi tr.mark td{background:#FFF6ED;font-weight:700;color:#101828}
+.ai .typing{display:flex;gap:18px;align-items:center}
+.ai .typing .av{width:34px;height:34px;border-radius:10px;flex:none;
+                background:linear-gradient(135deg,#FF7A1A,#FF4D6D 40%,#A855F7 72%,#3B82F6)}
+.ai .typing .dots{display:flex;gap:7px}
+.ai .typing .dots i{width:9px;height:9px;border-radius:50%;background:#D0D5DD;display:block;
+                    animation:bl 1.25s infinite}
+.ai .typing .dots i:nth-child(2){animation-delay:.18s}
+.ai .typing .dots i:nth-child(3){animation-delay:.36s}
+@keyframes bl{0%,60%,100%{opacity:.34}30%{opacity:1}}
+.ai .box{margin:0 120px 34px;border:1.5px solid #EAECF0;border-radius:16px;padding:19px 24px;
+         display:flex;align-items:center;gap:14px;font-size:19px;color:#98A2B3}
+.ai .box .send{margin-left:auto;width:38px;height:38px;border-radius:10px;background:#101828;color:#fff;
+               font-size:19px;line-height:38px;text-align:center}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+
+  <!-- ── 1. 엑셀로 내려받은 원본 ── -->
+  <div class="view xl" id="v-table">
+    <div class="titlebar">
+      <span class="app">X</span>
+      <span class="fname">GA4_원본_20250801_20260824.xlsx <em>저장됨</em></span>
+      <span class="win">&#8211; &#9633; &#10005;</span>
+    </div>
+    <div class="ribtabs">
+      <span>파일</span><span class="on">홈</span><span>삽입</span><span>페이지 레이아웃</span>
+      <span>수식</span><span>데이터</span><span>검토</span><span>보기</span>
+    </div>
+    <div class="ribbon">
+      <div class="rgrp"><div class="ri">
+        <span class="btn"><i>&#128203;</i>붙여넣기</span></div><b>클립보드</b></div>
+      <div class="rgrp"><div class="ri">
+        <span class="sq">B</span><span class="sq"><i>I</i></span><span class="sq">U</span>
+        <span class="sq">&#8801;</span><span class="sq">&#8942;</span></div><b>글꼴</b></div>
+      <div class="rgrp"><div class="ri">
+        <span class="btn"><i>&#8595;&#8593;</i>정렬</span>
+        <span class="btn"><i>&#9662;</i>필터</span>
+        <span class="btn"><i>&#128269;</i>찾기</span></div><b>편집</b></div>
+      <div class="rgrp"><div class="ri">
+        <span class="btn"><i>&#9636;</i>피벗 테이블</span>
+        <span class="btn"><i>&#128200;</i>차트</span></div><b>삽입</b></div>
+      <div class="rgrp"><div class="ri">
+        <span class="btn"><i>&#8721;</i>자동 합계</span>
+        <span class="btn"><i>%</i>표시 형식</span></div><b>계산</b></div>
+    </div>
+    <div class="formbar">
+      <span class="namebox">D2</span><span class="fx">fx</span>
+      <span class="fval">275060</span>
+    </div>
+    <div class="grid"><table id="xlgrid"></table></div>
+    <div class="sheets">
+      <span class="sh on">페이지_원본</span><span class="sh">채널_원본</span><span class="sh">일자별_원본</span>
+      <span class="sh">피벗1</span><span class="sh">피벗2</span><span class="sh">보고서용</span>
+      <span class="sh" style="color:#9AA0A6">&#43;</span>
+    </div>
+    <div class="status">
+      <span>준비</span><span id="xlcount"></span>
+      <span class="right"><span id="xlsum"></span><span>100%</span></span>
+    </div>
+  </div>
+
+  <!-- ── 2. 대시보드 ── -->
+  <div class="view ga" id="v-dash">
+    <div class="rail">
+      <div class="brand"><b></b>Analytics</div>
+      <div class="nav"><i>&#9737;</i>홈</div>
+      <div class="nav on"><i>&#9636;</i>보고서</div>
+      <div class="sub on">획득 개요</div>
+      <div class="sub">트래픽 획득</div>
+      <div class="sub">사용자 획득</div>
+      <div class="sub">참여도</div>
+      <div class="sub">수익 창출</div>
+      <hr>
+      <div class="nav"><i>&#9673;</i>탐색</div>
+      <div class="nav"><i>&#9788;</i>광고</div>
+      <div class="nav"><i>&#9881;</i>관리</div>
+    </div>
+    <div class="main">
+      <div class="top">
+        <div class="prop">열매나눔재단 <span>속성 493257809</span></div>
+        <div class="chip">&#128197; 2025. 8. 1. ~ 2026. 8. 24.</div>
+      </div>
+      <div class="body">
+        <h1>획득 개요</h1>
+        <div class="crumb">보고서 &#8250; 획득 &#8250; 개요</div>
+        <div class="cards" id="gacards"></div>
+        <div class="row2">
+          <div class="panel">
+            <h3>세션</h3>
+            <div class="sub">기간 전체, 일자별</div>
+            <svg id="galine" viewBox="0 0 900 300" preserveAspectRatio="none"></svg>
+          </div>
+          <div class="panel">
+            <h3>채널 그룹별 세션</h3>
+            <div class="sub">상위 8개</div>
+            <div class="bars" id="gabars"></div>
+          </div>
+        </div>
+        <div class="panel row3">
+          <h3>채널 그룹별 실적</h3>
+          <div class="sub">세션 내림차순</div>
+          <table class="gtab" id="gatab"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. 자연어 질의 ── -->
+  <div class="view ai" id="v-ai">
+    <div class="aitop">
+      <b></b><span class="who">재단 자료 분석</span>
+      <span class="src">읽어 둔 자료  GA4 속성 493257809, 2025. 8. 1. ~ 2026. 8. 24.</span>
+    </div>
+    <div class="thread">
+      <div class="me">배너 광고로 들어온 사람이 제일 많은데 후원까지 간 사람은 왜 이렇게 적나요?</div>
+      <div class="bot">
+        <span class="av"></span>
+        <div class="msg">
+          <p>세션 수와 후원 건수가 따로 놉니다. <strong>배너가 속한 Display 채널은 세션의 83퍼센트를 가져오지만 후원은 16퍼센트만 만듭니다.</strong></p>
+          <div class="evi">
+            <div class="eh">근거  channel_totals 14행 중 4행</div>
+            <table>
+              <tr><th>채널 그룹</th><th>세션</th><th>후원</th><th>1건당 세션</th><th>참여율</th></tr>
+              <tr class="mark"><td>Display</td><td>375,376</td><td>114</td><td>3,293</td><td>16.7%</td></tr>
+              <tr><td>Direct</td><td>22,046</td><td>318</td><td>69</td><td>43.1%</td></tr>
+              <tr><td>Organic Search</td><td>19,365</td><td>106</td><td>183</td><td>66.7%</td></tr>
+              <tr><td>Paid Search</td><td>8,909</td><td>69</td><td>129</td><td>73.6%</td></tr>
+            </table>
+          </div>
+          <p>후원 한 건을 얻는 데 Display는 3,293세션이 들고 Direct는 69세션이 듭니다. <strong>48배 차이입니다.</strong> 참여율도 16.7퍼센트로 가장 낮아, 들어오자마자 나가는 사람이 대부분입니다.</p>
+          <p>배너를 줄이자는 뜻으로 읽지는 마십시오. Display는 재단을 처음 알게 되는 자리이고, 그 사람들이 나중에 Direct나 검색으로 다시 들어와 후원할 수 있습니다. 지금 자료로는 그 연결을 확인할 수 없습니다.</p>
+        </div>
+      </div>
+      <div class="me">그러면 그 연결을 확인하려면 무엇이 더 필요한가요?</div>
+      <div class="typing"><span class="av"></span><span class="dots"><i></i><i></i><i></i></span></div>
+    </div>
+    <div class="box">무엇이든 물어보십시오<span class="send">&#8593;</span></div>
+  </div>
+
+  <div id="bar">
+    <button data-view="table">표</button>
+    <button data-view="dash">대시보드</button>
+    <button data-view="ai">AI 질의</button>
+    <span class="sep"></span>
+    <button id="full">전체 화면</button>
+  </div>
+</div></div>
+
+<script>
+"use strict";
+const A = /*__ANALOG_DATA__*/null;
+
+/* 1920x1080 판을 창 크기에 맞춰 줄인다. 덱 안의 작은 틀에서도 같은 그림이 나온다. */
+const stage = document.getElementById("stage");
+function fit() {
+  const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  stage.style.transform = "scale(" + k + ")";
+}
+addEventListener("resize", fit); fit();
+
+const nf = n => n.toLocaleString("ko-KR");
+
+/* ── 표 ── */
+(function () {
+  const COLS = ["A", "B", "C", "D", "E", "F"];
+  const W = ["16%", "23%", "31%", "10%", "10%", "10%"];
+  const t = document.getElementById("xlgrid");
+  let h = "<colgroup><col style='width:66px'>" +
+          W.map(w => "<col style='width:" + w + "'>").join("") + "</colgroup>";
+  h += "<thead><tr><th></th>" + COLS.map(c => "<th>" + c + "</th>").join("") + "</tr></thead><tbody>";
+  h += "<tr><td class='rn'>1</td>" +
+       A.table.head.map(c => "<td>" + c + "</td>").join("") + "</tr>";
+  A.table.rows.forEach((r, i) => {
+    h += "<tr><td class='rn'>" + (i + 2) + "</td>" +
+      "<td>" + r[0] + "</td><td>" + r[1] + "</td><td>" + r[2] + "</td>" +
+      "<td class='num" + (i === 0 ? " sel" : "") + "'>" + nf(r[3]) + "</td>" +
+      "<td class='num'>" + nf(r[4]) + "</td><td class='num'>" + nf(r[5]) + "</td></tr>";
+  });
+  h += "</tbody>";
+  t.innerHTML = h;
+  t.querySelector("tbody tr").classList.add("hdr");
+  document.getElementById("xlcount").textContent =
+    nf(A.table.total) + "개 중 " + nf(A.table.total) + "개 레코드를 찾았습니다";
+  document.getElementById("xlsum").textContent =
+    "합계 " + nf(A.table.pvSum) + "    개수 " + nf(A.table.total);
+})();
+
+/* ── 대시보드 ── */
+(function () {
+  document.getElementById("gacards").innerHTML = A.dash.cards.map(c =>
+    '<div class="card"><div class="k">' + c.k + '</div><div class="v">' + c.v + '</div>' +
+    '<div class="d' + (c.up ? '' : ' dn') + '">' + (c.up ? "&#9650; " : "&#9660; ") + c.d + '</div></div>'
+  ).join("");
+
+  const mx = A.dash.bars[0][1];
+  document.getElementById("gabars").innerHTML = A.dash.bars.map(([t, v]) =>
+    '<div class="bar"><span class="t">' + t + '</span>' +
+    '<span class="g"><i style="width:' + (v / mx * 100).toFixed(1) + '%"></i></span>' +
+    '<span class="n">' + nf(v) + '</span></div>'
+  ).join("");
+
+  // 일자별 세션. 값이 크게 튀어 로그 눈금으로 그린다.
+  const s = A.dash.series, n = s.length;
+  const top = Math.max(...s), lo = Math.min(...s);
+  const yy = v => 288 - (Math.log(v + 1) - Math.log(lo + 1)) /
+                        (Math.log(top + 1) - Math.log(lo + 1)) * 268;
+  const xx = i => i / (n - 1) * 900;
+  const line = s.map((v, i) => (i ? "L" : "M") + xx(i).toFixed(1) + " " + yy(v).toFixed(1)).join(" ");
+  document.getElementById("gatab").innerHTML =
+    "<tr><th>채널 그룹</th><th>세션</th><th>참여율</th><th>후원 완료</th><th>수익</th></tr>" +
+    A.dash.tab.map(r => "<tr><td>" + r[0] + "</td><td>" + nf(r[1]) + "</td><td>" +
+      r[2].toFixed(1) + "%</td><td>" + nf(r[3]) + "</td><td>" + nf(r[4]) + "원</td></tr>").join("");
+  document.getElementById("galine").innerHTML =
+    '<defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#1A73E8" stop-opacity=".22"/>' +
+    '<stop offset="1" stop-color="#1A73E8" stop-opacity="0"/></linearGradient></defs>' +
+    [0, 1, 2, 3].map(i => '<line x1="0" y1="' + (20 + i * 89) + '" x2="900" y2="' + (20 + i * 89) +
+                          '" stroke="#EEF0F2" stroke-width="1"/>').join("") +
+    '<path d="' + line + ' L900 300 L0 300 Z" fill="url(#gg)"/>' +
+    '<path d="' + line + '" fill="none" stroke="#1A73E8" stroke-width="2.2" ' +
+    'stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+})();
+
+/* ── 화면 고르기 ── */
+const P = new URLSearchParams(location.search);
+const VIEWS = ["table", "dash", "ai"];
+function show(v) {
+  if (!VIEWS.includes(v)) v = "table";
+  VIEWS.forEach(k => document.getElementById("v-" + k).classList.toggle("on", k === v));
+  document.querySelectorAll("#bar button[data-view]")
+    .forEach(b => b.classList.toggle("on", b.dataset.view === v));
+}
+document.querySelectorAll("#bar button[data-view]")
+  .forEach(b => b.onclick = () => show(b.dataset.view));
+document.getElementById("full").onclick = () =>
+  document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+addEventListener("keydown", e => {
+  const i = VIEWS.indexOf(VIEWS.find(k => document.getElementById("v-" + k).classList.contains("on")));
+  if (e.key === "ArrowRight") show(VIEWS[(i + 1) % 3]);
+  if (e.key === "ArrowLeft") show(VIEWS[(i + 2) % 3]);
+});
+show(P.get("view") || "table");
+if (!P.has("view")) document.getElementById("bar").classList.add("show");
+</script>
+</body>
+</html>
