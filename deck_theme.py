@@ -7,7 +7,7 @@
 import base64, re, sys, pathlib, hashlib, json
 
 ROOT = pathlib.Path(__file__).parent
-TOTAL = 31
+TOTAL = 26
 
 def img64(path):
     data = (ROOT / path).read_bytes()
