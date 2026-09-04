@@ -546,7 +546,7 @@ def s_cover(n):
            '<circle class="rip r2" cx="330" cy="330" r="300" fill="none" stroke="url(#sg)" stroke-width="3"/>'
            '<circle cx="330" cy="330" r="14" fill="url(#sg)"/></svg>')
     body = (f'{aur}{sig}<div class="fg">'
-            '<h1>고객이 무엇을 하는지<br><span class="gt">숫자로 보이게</span> 만듭니다</h1>'
+            '<h1>고객의 행동을<br><span class="gt">숫자로 바꾸는</span> 회사</h1>'
             '<p class="sub">웹과 앱에서 벌어지는 행동을 세어 두고, '
             '그 숫자 위에서 광고와 자사몰을 고쳐 성과를 끌어올립니다. '
             '오늘은 이 일을 실제 산출물 화면으로 보여 드립니다.</p>'
@@ -574,7 +574,7 @@ def s_toc(n):
         + "".join(f'<li><b>{i:02d}</b>{x}</li>' for i, x in enumerate(items, 1))
         + '</ul></div>' for no, title, items in cols)
     inner = f'<div class="toc five">{html}</div>'
-    return wide(n, P1, "오늘의 차례", '일한 <span class="gt">실물</span>을 순서대로 봅니다',
+    return wide(n, P1, "오늘의 차례", '<span class="gt">실물</span>로 보는 다섯 부',
                 "오늘 다룰 다섯 부",
                 "무엇을 하는 회사인지 먼저 세우고, 실제 산출물 화면으로 일하는 방식을 본 뒤, 운영 규모와 AI, 앞으로로 마칩니다.",
                 inner, "")
@@ -595,7 +595,7 @@ def s_intro(n):
                "마케팅 교육업이 별도 업종입니다. 고객사 담당자가 스스로 다루게 만드는 데까지가 사업 범위입니다."),
               ("2020년 12월에 시작했습니다",
                "프로젝트는 2022년부터 본격적으로 쌓였습니다.")]
-    return split(n, P1, "회사", '<span class="gt">업종 넷</span>이 회사의 성격을 그대로 보여 줍니다',
+    return split(n, P1, "회사", '<span class="gt">업종 넷</span>으로 읽는 회사의 성격',
                  "등록된 업종 네 가지",
                  "경영 컨설팅과 광고 대행, 마케팅 교육, 그리고 응용 소프트웨어 개발입니다. "
                  "네 해 동안 한 일이 이 넷을 벗어나지 않았습니다.",
@@ -617,7 +617,7 @@ def s_problem(n):
              + band('네 문제는 따로 오지 않습니다. 무엇을 셀지 정하지 않은 채로 광고비만 커지면 넷이 함께 나타납니다. '
                     '<strong>그래서 우리는 세는 일부터 다시 만듭니다.</strong>')
              + '</div>')
-    return wide(n, P1, "출발점", '고객사는 <span class="gt">같은 자리</span>에서 막혀 있습니다',
+    return wide(n, P1, "출발점", '고객사가 들고 오는 <span class="gt">문제 넷</span>',
                 "고객사가 들고 오는 문제 넷",
                 "네 해 동안 만난 회사들이 처음에 꺼내는 말은 크게 넷입니다. 업종이 달라도 반복됩니다.",
                 inner, "")
@@ -641,7 +641,7 @@ def s_ground(n):
              + band('질문이 어려워서 답이 안 나오는 것이 아닙니다. '
                     '<strong>무엇을 셀지 미리 정해 두지 않으면 지나간 행동은 되돌려 셀 수 없습니다.</strong>')
              + '</div>')
-    return wide(n, P1, "분석 환경", '<span class="gt">분석 환경</span>은 질문에 답할 수 있는 상태입니다',
+    return wide(n, P1, "분석 환경", '<span class="gt">분석 환경</span>이라는 말의 뜻',
                 "분석 환경이라는 말의 뜻",
                 "웹과 앱에서 벌어지는 행동을 정해 둔 이름으로 기록해 두는 일입니다. "
                 "이것이 되어 있는지에 따라 답할 수 있는 질문이 갈립니다.",
@@ -659,7 +659,7 @@ def s_did_what(n):
              + band('네 갈래가 따로 팔린 적은 거의 없습니다. '
                     '<strong>분석 환경을 깔고 그 위에서 마케팅을 돌리는 한 덩어리였습니다.</strong>')
              + '</div>')
-    return wide(n, P1, "한 일의 갈래", '일로 보면 <span class="gt">네 갈래</span>입니다',
+    return wide(n, P1, "한 일의 갈래", '우리가 하는 일 <span class="gt">네 갈래</span>',
                 "우리가 하는 네 갈래의 일",
                 "분석 환경을 가운데 두면 일이 넷으로 갈라집니다. 2022년부터 2025년까지 한 프로젝트를 성격으로 묶었습니다.",
                 inner, "")
@@ -677,7 +677,7 @@ def s_value(n):
              + band('우리가 남기는 것은 보고서가 아니라 <strong>회사가 계속 쓰는 기록 체계입니다.</strong> '
                     '다음 부에서 그 체계를 이루는 실물을 하나씩 봅니다.')
              + '</div>')
-    return wide(n, P1, "가치", '판단의 <span class="gt">근거</span>가 회사 안에 남습니다',
+    return wide(n, P1, "가치", '회사 안에 남는 <span class="gt">판단의 근거</span>',
                 "맡기기 전과 맡긴 뒤",
                 "일이 끝난 뒤 고객사에 무엇이 남는지로 우리 일을 설명합니다.",
                 inner, "")
@@ -706,7 +706,7 @@ def s_did_steps(n):
              + band('말로 하면 여섯 줄이지만, 단계마다 실물이 남습니다. '
                     '<strong>다음 여섯 장이 그 실물입니다.</strong>')
              + '</div>')
-    return wide(n, P2, "일하는 순서", '정하고, 적고, 심고, <span class="gt">검수하고</span>, 넘깁니다',
+    return wide(n, P2, "일하는 순서", '구축이 지나는 <span class="gt">여섯 단계</span>',
                 "구축이 지나는 여섯 단계",
                 "분석 환경 구축은 업종이 달라도 이 순서를 지납니다.",
                 inner, "")
@@ -741,7 +741,7 @@ def s_shot_spec(n):
               "개발이 이 표를 보고 코드를 심고, 우리가 이 표대로 검수하고, 대시보드도 이 이름으로 집계합니다.")]
     inner = shot("", "", metas, "2024년 안랩 프로젝트에서 실제로 쓴 정의서입니다. 문서 원본은 구글 시트로 고객사에 남아 있습니다.",
                  inner_html=sheet)
-    return wide(n, P2, "실물 1", '무엇을 셀지 <span class="gt">문서 하나</span>에 고정합니다',
+    return wide(n, P2, "실물 1", '무엇을 셀지 고정하는 <span class="gt">이벤트 정의서</span>',
                 "실물 하나, 이벤트 정의서", "", inner, "")
 
 
@@ -772,7 +772,7 @@ def s_shot_guide(n):
              ("어디로 이어지나", "정의서의 이름이 코드가 됩니다",
               "정의서에 적은 view_cart라는 이름이 이 코드로 심어지고, 심어진 그대로 다음 단계의 검수 대상이 됩니다.")]
     inner = shot("", "", metas, "2023년 신세계면세점 프로젝트에서 실제로 넘긴 가이드입니다.", rev=True, inner_html=combo)
-    return wide(n, P2, "실물 2", '개발자가 <span class="gt">그대로 붙일 수 있게</span> 적습니다',
+    return wide(n, P2, "실물 2", '개발자가 그대로 붙이는 <span class="gt">스크립트 가이드</span>',
                 "실물 둘, 스크립트 가이드", "", inner, "")
 
 
@@ -787,7 +787,7 @@ def s_shot_debug(n):
     inner = shot("assets/capture/debug_console.jpg",
                  "신세계면세점 상품 화면과 개발자 도구 콘솔로 수집 값을 검수하는 실제 화면",
                  metas, "2023년 신세계면세점 디버깅 방문 기록에 남은 실제 검수 화면입니다.")
-    return wide(n, P2, "실물 3", '숫자를 <span class="gt">믿게 만드는</span> 단계입니다',
+    return wide(n, P2, "실물 3", '숫자를 믿게 만드는 <span class="gt">검수</span>',
                 "실물 셋, 검수 화면", "", inner, "")
 
 
@@ -802,7 +802,7 @@ def s_shot_dash(n):
     inner = shot("assets/capture/looker_dashboard.png",
                  "베스핀글로벌 GA4 대시보드의 콘텐츠 및 웹사이트 분석 화면",
                  metas, "2026년 베스핀글로벌 프로젝트에서 실제로 운영 중인 대시보드입니다.")
-    return wide(n, P2, "실물 4", '담당자가 <span class="gt">매일 여는 화면</span>을 만듭니다',
+    return wide(n, P2, "실물 4", '담당자가 매일 여는 <span class="gt">대시보드</span>',
                 "실물 넷, 대시보드", "", inner, "")
 
 
@@ -817,7 +817,7 @@ def s_shot_bq(n):
     inner = shot("assets/capture/ga4_bigquery.png",
                  "GA4 관리 화면에서 빅쿼리 링크 메뉴를 붉은 상자로 표시한 가이드",
                  metas, "신세계면세점에 넘긴 GA4 빅쿼리 연결 가이드의 실제 화면입니다. 시연용 테스트 계정으로 만들었습니다.")
-    return wide(n, P2, "실물 5", '데이터가 <span class="gt">회사의 자산</span>으로 쌓입니다',
+    return wide(n, P2, "실물 5", '데이터를 회사 자산으로 만드는 <span class="gt">빅쿼리 연결</span>',
                 "실물 다섯, 빅쿼리 연결", "", inner, "")
 
 
@@ -851,7 +851,7 @@ def s_shot_handover(n):
               "새 담당자가 이 방만 읽으면 무엇을 어떻게 세고 있는지 파악할 수 있습니다. 우리가 빠져도 남는 가치가 여기 있습니다.")]
     inner = shot("", "", metas, "실제 노션 워크스페이스의 교보문고 문서방 구성을 이름 그대로 옮겼습니다.",
                  inner_html=notion)
-    return wide(n, P2, "실물 6", '우리가 빠져도 <span class="gt">기록은 남습니다</span>',
+    return wide(n, P2, "실물 6", '우리가 빠져도 남는 <span class="gt">인계 기록</span>',
                 "실물 여섯, 인계 문서", "", inner, "")
 
 
@@ -866,7 +866,7 @@ def s_growth(n):
     inner = shot("assets/capture/looker_ads.png",
                  "사이버한국외대 검색광고 키워드 성과와 배너 캠페인 성과 대시보드",
                  metas, "2026년 사이버한국외대 입학 홍보 프로젝트의 실제 광고 성과 화면입니다.")
-    return wide(n, P2, "그로스 마케팅", '분석 다음은 <span class="gt">실험</span>입니다',
+    return wide(n, P2, "그로스 마케팅", '분석 다음의 실험, <span class="gt">그로스 마케팅</span>',
                 "쌓인 숫자로 하는 그로스 마케팅", "", inner, "")
 
 
@@ -926,7 +926,7 @@ def s_shot_slack(n):
               "스물네 곳의 회차 진도가 채널을 훑으면 보이므로, 밀린 기업의 채널만 골라 들어가 확인합니다.")]
     inner = shot("", "", metas, "2026년 9월 첫 주의 실제 채널 기록입니다. 컨설턴트 이름은 가렸습니다.",
                  inner_html=pane)
-    return wide(n, P3, "실물, 회차 등록", '모으지 않고 <span class="gt">쌓이게</span> 둡니다',
+    return wide(n, P3, "실물, 회차 등록", '모으지 않고 쌓는 <span class="gt">회차 등록</span>',
                 "실물, 회차 등록 채널", "", inner, "")
 
 
@@ -954,7 +954,7 @@ def s_shot_bot(n):
              ("어디로 이어지나", "주간 두세 줄이 월간 보고가 됩니다",
               "이렇게 모인 주간 기록이 그대로 월간 이슈 공유 문서가 되어, 공사 보고 자료를 따로 만들지 않습니다.")]
     inner = shot("", "", metas, "2026년 사업 채널에 실제로 올라온 봇 메시지입니다.", rev=True, inner_html=pane)
-    return wide(n, P3, "실물, 봇 리마인드", '사람이 아니라 <span class="gt">봇이 챙깁니다</span>',
+    return wide(n, P3, "실물, 봇 리마인드", '사람 대신 마감을 챙기는 <span class="gt">봇</span>',
                 "실물, 봇이 대신 챙기는 마감", "", inner, "")
 
 
@@ -970,7 +970,7 @@ def s_kto_rate(n):
                "파트너사 인력이 섞여 있어도 70퍼센트의 뜻이 같습니다."),
               ("멈춘 자리가 드러납니다",
                "여러 주 같은 숫자에 머물면 어느 단계에서 막혔는지 보입니다.")]
-    return split(n, P3, "진행률", '<span class="gt">70퍼센트</span>가 무엇인지 정해 둡니다',
+    return split(n, P3, "진행률", '<span class="gt">70퍼센트</span>의 뜻을 정한 기준표',
                  "진행률을 맞추는 기준표",
                  "주간 보고에 함께 적는 숫자입니다. 적는 사람마다 뜻이 달라지므로 단계마다 기준을 정해 둡니다. 오른쪽이 실제 기준표입니다.",
                  points, _info(rows), "")
@@ -987,7 +987,7 @@ def s_kto_report(n):
                     '세 층이 같은 자료를 쓰기 때문에 옮겨 적는 일이 없고, '
                     '<strong>지표나 계획이 바뀌면 사유를 적어 스레드 한곳에 남깁니다.</strong>')
              + '</div>')
-    return wide(n, P3, "성과 보고", '주간, 월간, <span class="gt">차수별</span>로 나눕니다',
+    return wide(n, P3, "성과 보고", '주간, 월간, 차수별 <span class="gt">보고 세 층</span>',
                 "공사에 보고하는 세 층",
                 "주간에 쌓인 것이 위로 어떻게 올라가는지 봅니다. 주기마다 문서를 새로 만들면 스물네 곳을 감당하지 못합니다.",
                 inner, "")
@@ -1008,7 +1008,7 @@ def s_ai_shift(n):
                     '<strong>AI 광고 분석 대시보드</strong>가 처음 들어왔습니다. '
                     '그 뒤로 AI를 심는 순서가 자리를 잡았습니다.')
              + '</div>')
-    return wide(n, P4, "달라진 것", '맡는 일이 <span class="gt">판단 쪽으로</span> 옮겨 왔습니다',
+    return wide(n, P4, "달라진 것", '<span class="gt">판단 쪽으로</span> 옮겨 온 일의 성격',
                 "일의 성격이 바뀐 자리",
                 "다루는 데이터는 같지만 어디까지 맡는지가 달라졌습니다.",
                 inner, "")
@@ -1026,7 +1026,7 @@ def s_ai_flow(n):
                     '우리는 세 번째 단계에서 담당자 노트북을 함께 열고, '
                     '<strong>회사 데이터에 연결된 상태로 만들어 놓고 나옵니다. 그 결과가 다음 두 장입니다.</strong>')
              + '</div>')
-    return wide(n, P4, "AI 컨설팅", '쓰라고 말하는 대신 <span class="gt">쓰게 만듭니다</span>',
+    return wide(n, P4, "AI 컨설팅", 'AI를 쓰게 만드는 <span class="gt">다섯 단계</span>',
                 "고객사에 AI를 심는 다섯 단계",
                 "도구를 소개하는 일과 실제로 쓰게 만드는 일 사이에 이 다섯 단계가 있습니다.",
                 inner, "")
@@ -1055,7 +1055,7 @@ def s_ai_chat(n):
     inner = shot("", "", metas,
                  "2026년 지원사업 참여 기업의 노트북마다 실제로 설치하는 기능입니다. 화면의 수치는 시연용 예시입니다.",
                  inner_html=chat)
-    return wide(n, P4, "설치 결과 1", '보고서 대신 <span class="gt">질문</span>을 가르칩니다',
+    return wide(n, P4, "설치 결과 1", '말로 묻는 <span class="gt">GA4 분석</span>',
                 "설치 결과 하나, 말로 묻는 분석", "", inner, "")
 
 
@@ -1078,7 +1078,7 @@ def s_ai_pipe(n):
              + band('매주 자료를 오려 붙여 보고서를 만들던 사람에게, 아침마다 완성된 스크랩이 배달되는 것과 같습니다. '
                     '<strong>참여 기업마다 그 회사가 매주 손으로 하던 일 하나를 골라 이 흐름으로 바꿉니다.</strong>')
              + '</div>')
-    return wide(n, P4, "설치 결과 2", '리포트가 <span class="gt">아침에 도착</span>합니다',
+    return wide(n, P4, "설치 결과 2", '<span class="gt">아침에 도착</span>하는 리포트',
                 "설치 결과 둘, 아침에 도착하는 리포트",
                 "매주 반복되던 보고 작업 하나가 어떻게 바뀌는지 흐름으로 봅니다.",
                 inner, "")
@@ -1096,7 +1096,7 @@ def s_ai_sub(n):
             ("방식", "플랜 단위 월 구독을 권합니다"),
             ("증빙", "영수증을 모아 사업 종료 때 냅니다"),
             ("바뀔 때", "도구를 바꾸면 사유를 적어 공사에 올립니다")]
-    return split(n, P4, "구독 설계", '<span class="gt">무엇을 구독할지</span>도 컨설팅입니다',
+    return split(n, P4, "구독 설계", '컨설팅으로 정하는 <span class="gt">구독 조합</span>',
                  "구독을 설계하는 일",
                  "한도 안에서 도구를 어떻게 조합할지 정하는 일입니다. 예산을 어디에 쓰는지에 따라 성과가 달라집니다.",
                  points, _info(rows), "")
@@ -1125,7 +1125,7 @@ def s_clients(n):
     inner = (_rows(rows, "grp")
              + band('성과의 정의는 업종마다 달랐습니다. 구매가 없는 회사에서는 문의와 상담을 성과로 잡았습니다. '
                     '<strong>정의가 달라져도 오늘 본 실물의 순서는 같았습니다.</strong>'))
-    return wide(n, P5, "고객사", '한 업종에 <span class="gt">묶이지 않았습니다</span>',
+    return wide(n, P5, "고객사", '한 업종에 묶이지 않은 <span class="gt">고객사 53건</span>',
                 "네 해 동안 만난 고객사",
                 "2022년부터 2025년까지 53건을 고객사 성격으로 묶으면 네 갈래입니다. 칸에 다 담기지 않은 곳은 생략했습니다.",
                 inner, "")
@@ -1146,7 +1146,7 @@ def s_hist_next(n):
              + '<div style="margin-top:26px">' + cards(items, "갈래", "three", icons=["bolt", "toolbox"]) + '</div>'
              + band('2025년에 AI를 다루는 프로젝트가 처음 들어왔고, 다음 걸음도 그 연장선에 있습니다. '
                     '<strong>AX 컨설팅에서 반복되는 일이 다음 제품의 재료가 됩니다.</strong>', top=26))
-    return wide(n, P5, "연혁과 방향", '네 해가 쌓여 <span class="gt">다음 두 갈래</span>가 나왔습니다',
+    return wide(n, P5, "연혁과 방향", '쌓인 네 해와 <span class="gt">앞으로 갈 두 갈래</span>',
                 "쌓인 네 해와 앞으로 갈 두 갈래",
                 "연혁의 굵은 항목을 따라가면 흐름이 보입니다. 2025년의 AI 프로젝트 둘이 앞으로 갈 방향을 정했습니다.",
                 inner, "")
@@ -1156,7 +1156,7 @@ def s_end(n):
     HEADERS[n] = "마무리"
     aur = '<i class="aur a2"></i><i class="aur a3"></i>'
     body = (f'{aur}<div class="fg">'
-            '<h2>오픈소스마케팅이 남기는 것은<br><span class="gt">회사 안에 쌓이는 판단 근거</span>입니다</h2>'
+            '<h2>오픈소스마케팅이 남기는 것,<br><span class="gt">회사 안에 쌓이는 판단 근거</span></h2>'
             '<p class="endsub">오늘 본 정의서와 가이드, 검수 화면, 대시보드가 그 증거입니다. '
             '무엇을 셀지 정하고, 기록이 남게 만들고, 그 숫자로 마케팅을 고치는 일을 네 해 동안 반복했습니다.</p>'
             '<div class="endcontact"><span>contact@osoma.kr</span><span>osoma.kr</span></div>'
